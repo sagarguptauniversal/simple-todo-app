@@ -3,58 +3,64 @@ import axios from 'axios';
 import './App.css';
 
 function App() {
-  // 1. STATE: This is React's memory. 
-  // 'todos' holds our list of tasks. 'newTask' holds the text we type in the input box.
   const [todos, setTodos] = useState([]);
   const [newTask, setNewTask] = useState('');
 
-  // 2. USEEFFECT: This runs automatically when the page first loads.
-  // We use it to ask our backend for the existing To-Dos.
+  // Fetch To-Dos on load
   useEffect(() => {
     axios.get('http://localhost:5000/api/todos')
-      .then(response => {
-        setTodos(response.data); // Save the data from the backend into our 'todos' state
-      })
+      .then(response => setTodos(response.data))
       .catch(error => console.error("Error fetching data:", error));
-  }, []); // The empty array [] means "only run this once"
+  }, []);
 
-  // 3. ADD FUNCTION: This runs when we click the "Add" button.
+  // Add a new To-Do
   const addTodo = (e) => {
-    e.preventDefault(); // Stops the page from refreshing when we submit the form
-    if (!newTask) return; // If the input is empty, do nothing
+    e.preventDefault();
+    if (!newTask) return;
 
-    // Send a POST request to our backend with the new task
     axios.post('http://localhost:5000/api/todos', { task: newTask })
       .then(response => {
-        // Add the brand new task to our existing list of tasks
         setTodos([...todos, response.data]); 
-        setNewTask(''); // Clear out the input box
+        setNewTask('');
       })
       .catch(error => console.error("Error adding task:", error));
   };
 
-  // 4. THE UI (JSX): This looks like HTML, but it's actually JavaScript!
+  // NEW: Delete a To-Do
+  const deleteTodo = (id) => {
+    // 1. Tell the backend to delete it from the database
+    axios.delete(`http://localhost:5000/api/todos/${id}`)
+      .then(() => {
+        // 2. Update our React UI by filtering out the deleted item
+        // This says: "Keep all todos EXCEPT the one with the ID we just deleted"
+        setTodos(todos.filter(todo => todo._id !== id));
+      })
+      .catch(error => console.error("Error deleting task:", error));
+  };
+
   return (
     <div className="App">
       <h1>My To-Do List</h1>
       
-      {/* The Input Form */}
       <form onSubmit={addTodo}>
         <input 
           type="text" 
           placeholder="Add a new task..." 
           value={newTask}
-          onChange={(e) => setNewTask(e.target.value)} // Updates 'newTask' as we type
+          onChange={(e) => setNewTask(e.target.value)}
         />
         <button type="submit">Add Task</button>
       </form>
 
-      {/* The List of Tasks */}
       <ul>
-        {/* We 'map' (loop) through our todos array and create an <li> for each one */}
         {todos.map((todo) => (
-          <li key={todo._id}>
-            {todo.task}
+          // We use a CSS class to arrange the text and button nicely
+          <li key={todo._id} style={{ display: 'flex', justifyContent: 'space-between', margin: '10px 0' }}>
+            <span>{todo.task}</span>
+            {/* NEW: The Delete Button */}
+            <button onClick={() => deleteTodo(todo._id)} style={{ marginLeft: '15px', color: 'red' }}>
+              Delete
+            </button>
           </li>
         ))}
       </ul>

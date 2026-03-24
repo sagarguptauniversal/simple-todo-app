@@ -22,7 +22,7 @@ mongoose.connect(process.env.MONGO_URI, {
   .catch((err) => console.log("❌ MongoDB Connection Failed:", err));
 
 // ==========================================
-// API ROUTES
+// 5. API ROUTES
 // ==========================================
 
 // 1. CREATE: Add a new To-Do (POST Request)
@@ -51,6 +51,18 @@ app.get('/api/todos', async (req, res) => {
         res.status(200).json(todos);
     } catch (error) {
         res.status(500).json({ error: "Failed to fetch tasks" });
+    }
+});
+
+// 3. DELETE: Remove a To-Do (DELETE Request)
+// The ":id" part of the URL acts like a variable for the specific task's ID
+app.delete('/api/todos/:id', async (req, res) => {
+    try {
+        // Find the task by its ID and delete it from MongoDB
+        await Todo.findByIdAndDelete(req.params.id);
+        res.status(200).json({ message: "Task deleted successfully" });
+    } catch (error) {
+        res.status(500).json({ error: "Failed to delete task" });
     }
 });
 
